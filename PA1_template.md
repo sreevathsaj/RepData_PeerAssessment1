@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
@@ -15,7 +10,8 @@ output:
 #### Step 1 - Read the data. 
 
 
-```{r}
+
+```r
 act_data <- read.csv("activity.csv", header = T)
 ```
 
@@ -23,36 +19,59 @@ act_data <- read.csv("activity.csv", header = T)
 
 Group the data by date and calculate sum of steps for each day using group_by and summarize functions of dplyr package
 
-```{r}
+
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 daily <- act_data %>% 
           group_by(date) %>% 
            summarise(total_steps = sum(steps))
 
 per_day <- daily$total_steps
-
 ```
 
 #### Step 3 - Histogram of Total number of steps taken
 
-```{r}
+
+```r
 hist(per_day, 
      main = "Hisogram of Total Steps taken each Day",
      xlab = "Number of steps",
      col = "blue")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 
 
 ## What is mean total number of steps taken per day?
 
-``` {r}
+
+```r
 mean_steps <- mean(daily$total_steps, na.rm = T)
 median_steps <- median(daily$total_steps, na.rm = T)
 ```
-The mean of the the total steps taken is `r mean_steps`  
-The median of the total steps is is `r median_steps`
+The mean of the the total steps taken is 1.0766189\times 10^{4}  
+The median of the total steps is is 10765
 
 ## What is the average daily activity pattern?
 
@@ -62,81 +81,81 @@ This is to see the pattern of activity in different 5 minute intervals of time.
 
 First we group the data by interval and then calculate mean of each group using summarise function. 
 
-```{r}
 
+```r
 act_pat <- act_data %>% 
             group_by(interval) %>% 
             summarise(avg_steps = mean(steps, na.rm = T))
-
 ```
 
 #### Step 2 - Time series plot of 5- minute interval
 
 Here's a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r}
 
+```r
 plot(act_pat, type = "l", 
      main = "Average number of steps taken in each interval across all days",
      xlab = "5 minute Interval", 
      ylab = "Average number of steps", 
      col = "blue")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 #### Step 3 - Interval with maximum mumber of steps
 
 Calcualte the interval with maximum number of steps taken. 
 
-```{r}
 
+```r
 max_int <- act_pat[which.max(act_pat$avg_steps),1]
-                   
 ```
-Interval with maximum number of steps is `r max_int `.
+Interval with maximum number of steps is 835.
 
 ## Imputing missing values
 
 #### Step 1 - Calculate the number of missing values
 
-```{r}
 
+```r
 missing_values <- sum(is.na(act_data$steps))
 ```
 
-The number of missing values is `r missing_values `
+The number of missing values is 2304
 
 #### Step 2 - Remove the missing values, calculate daily activity and set the value of activity data to new object. 
 
-```{r}
+
+```r
 activity_rm <- act_data[complete.cases(act_data$steps),]
 ```
 
 Calculate daily activity. 
 
-```{r}
 
+```r
 daily_act <- tapply(activity_rm$steps, activity_rm$interval, mean)
-
 ```
 Set the value of original activity data to an object called new_act
 
-``` {r}
+
+```r
 new_act <- act_data
 ```
 
 #### Step 3 - Impute the missing values in the new object. 
 
-```{r}
 
+```r
 new_act[which(is.na(new_act$steps)),1]<-
       daily_act[as.character(new_act[which(is.na(new_act$steps)),3])]
-
 ```
 
 #### Step 4 - Calculate new daily activity with no missing values
 
-```{r}
+
+```r
 perday_new <- new_act %>% 
               group_by(date) %>% 
               summarise(total_steps = sum(steps)) 
@@ -144,8 +163,8 @@ perday_new <- new_act %>%
 
 #### Step 5 - Plot the data with and without missing values. 
 
-```{r}
 
+```r
 par(mfrow = c(1,2))
 
 hist(per_day, 
@@ -155,19 +174,21 @@ hist(per_day,
 hist(perday_new$total_steps, 
      main = "Data without missing values", 
      xlab = "Steps")
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
               
 
 #### Step 6 - Calculate mean and median of using imputed data
 
-```{r}
+
+```r
 mean_perdayNew <- mean(perday_new$total_steps)
 median_perdayNew <- median(perday_new$total_steps)
 ```
 
-Mean and Median of the new data is `r mean_perdayNew ` and `r median_perdayNew ` respectively.  
+Mean and Median of the new data is 1.0766189\times 10^{4} and 1.0766189\times 10^{4} respectively.  
 
 
 
@@ -178,27 +199,31 @@ Mean and Median of the new data is `r mean_perdayNew ` and `r median_perdayNew `
 
 Add a variable called day that converts the date to the corresponding day of the week
 
-```{r}
+
+```r
 new_act$day <- weekdays(as.Date(new_act$date))
 ```
 
  Add another factor variable called fday, which has two factors Weekend and Weekday
  
-```{r} 
+
+```r
 new_act$fday <- as.factor(c("Weekend", "Weekday"))
 ```
 
 
 Set the values Weekend to Sunday and Saturday and Weekday to all others
 
-```{r}
+
+```r
 new_act[new_act$day == "Sunday" | new_act$day == "Saturday",5] <- factor("Weekend")
 new_act[!(new_act$day == "Sunday" | new_act$day == "Saturday"),5] <- factor("Weekday")
 ```
 
 #### Step 2 - Seperate the dataframe on Weekdays and Weekend
 
-```{r}
+
+```r
 new_act_we <- new_act[new_act$fday == "Weekend",]
 new_act_wd <- new_act[new_act$fday == "Weekday",]
 ```
@@ -206,15 +231,16 @@ new_act_wd <- new_act[new_act$fday == "Weekday",]
 
 #### Step 3 - Summarize the data 
 
-```{r}
+
+```r
 weekend_act <- tapply(new_act_we$steps, new_act_we$interval, mean)
 weekday_act <- tapply(new_act_wd$steps, new_act_wd$interval, mean)
-
 ```
 
 #### Step 4 - Plot the Weekend and Weekday data adjacently. 
 
-```{r}
+
+```r
 par(mfrow = c(1,2))
 
 plot(y = weekend_act, x = names(weekend_act), type = "l", xlab = "5 minutes interval",
@@ -224,3 +250,5 @@ plot(y = weekday_act, x = names(weekday_act), type = "l", xlab = "5 minutes inte
      main = "Daily Activtiy Pattern during Weekdays", 
      ylab = "Average number of steps")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
