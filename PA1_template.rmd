@@ -1,0 +1,221 @@
+Reproducible Research assignment - Activity Monitoring
+=====================================================
+***
+### Part 1 - Mean and Median of the Total number of steps taken per day.
+
+***
+
+#### Step 1 - Read the data. 
+
+
+```{r}
+act_data <- read.csv("activity.csv", header = T)
+```
+
+#### Step 2 - Group the data and summarize
+
+Group the data by date and calculate sum of steps for each day using group_by and summarize functions of dplyr package
+
+```{r}
+library(dplyr)
+daily <- act_data %>% 
+          group_by(date) %>% 
+           summarise(total_steps = sum(steps))
+
+per_day <- daily$total_steps
+
+```
+
+#### Step 3 - Histogram of Total number of steps taken
+
+```{r}
+hist(per_day, 
+     main = "Hisogram of Total Steps taken each Day",
+     xlab = "Number of steps",
+     col = "blue")
+
+```
+
+#### Step 4 - Calculate and report mean and median of steps
+
+``` {r}
+mean_steps <- mean(daily$total_steps, na.rm = T)
+median_steps <- median(daily$total_steps, na.rm = T)
+```
+The mean of the the total steps taken is `r mean_steps`  
+The median of the total steps is is `r median_steps`
+***
+
+### Part 2 - Average daily activity Pattern. 
+            
+***
+#### Step 1 - Average daily activity Pattern 
+
+This is to see the pattern of activity in different 5 minute intervals of time.  
+
+First we group the data by interval and then calculate mean of each group using summarise function. 
+
+```{r}
+
+act_pat <- act_data %>% 
+            group_by(interval) %>% 
+            summarise(avg_steps = mean(steps, na.rm = T))
+
+```
+
+#### Step 2 - Time series plot of 5- minute interval
+
+Here's a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r}
+
+plot(act_pat, type = "l", 
+     main = "Average number of steps taken in each interval across all days",
+     xlab = "5 minute Interval", 
+     ylab = "Average number of steps", 
+     col = "blue")
+
+```
+
+#### Step 2 - Interval with maximum mumber of steps
+
+Calcualte the interval with maximum number of steps taken. 
+
+```{r}
+
+max_int <- act_pat[which.max(act_pat$avg_steps),1]
+                   
+```
+Interval with maximum number of steps is `r max_int `.
+***
+
+### Part 3 - Imputing missing values
+***
+#### Step 1 - Calculate the number of missing values
+
+```{r}
+
+missing_values <- sum(is.na(act_data$steps))
+```
+
+The number of missing values is `r missing_values `
+
+#### Step 2 - Remove the missing values, calculate daily activity and set the value of activity data to new object. 
+
+```{r}
+activity_rm <- act_data[complete.cases(act_data$steps),]
+```
+
+Calculate daily activity. 
+
+```{r}
+
+daily_act <- tapply(activity_rm$steps, activity_rm$interval, mean)
+
+```
+Set the value of original activity data to an object called new_act
+
+``` {r}
+new_act <- act_data
+```
+
+#### Step 3 - Impute the missing values in the new object. 
+
+```{r}
+
+new_act[which(is.na(new_act$steps)),1]<-
+      daily_act[as.character(new_act[which(is.na(new_act$steps)),3])]
+
+```
+
+#### Step 4 - Calculate new daily activity with no missing values
+
+```{r}
+perday_new <- new_act %>% 
+              group_by(date) %>% 
+              summarise(total_steps = sum(steps)) 
+```
+
+#### Step 5 - Plot the data with and without missing values. 
+
+```{r}
+
+par(mfrow = c(1,2))
+
+hist(per_day, 
+     main = "Data with Missing values", 
+     xlab = "Steps")
+
+hist(perday_new$total_steps, 
+     main = "Data without missing values", 
+     xlab = "Steps")
+
+```
+
+              
+
+#### Step 6 - Calculate mean and median of using imputed data
+
+```{r}
+mean_perdayNew <- mean(perday_new$total_steps)
+median_perdayNew <- median(perday_new$total_steps)
+```
+
+Mean and Median of the new data is `r mean_perdayNew ` and `r median_perdayNew ` respectively.  
+
+### Part 4 - Differences in activity patterns between weekdays and weekends
+
+***
+
+#### Step 1-  Setting the day of the week to each observation
+
+Add a variable called day that converts the date to the corresponding day of the week
+
+```{r}
+new_act$day <- weekdays(as.Date(new_act$date))
+```
+
+ Add another factor variable called fday, which has two factors Weekend and Weekday
+ 
+```{r} 
+new_act$fday <- as.factor(c("Weekend", "Weekday"))
+```
+
+
+Set the values Weekend to Sunday and Saturday and Weekday to all others
+
+```{r}
+new_act[new_act$day == "Sunday" | new_act$day == "Saturday",5] <- factor("Weekend")
+new_act[!(new_act$day == "Sunday" | new_act$day == "Saturday"),5] <- factor("Weekday")
+```
+
+#### Step 2 - Seperate the dataframe on Weekdays and Weekend
+
+```{r}
+new_act_we <- new_act[new_act$fday == "Weekend",]
+new_act_wd <- new_act[new_act$fday == "Weekday",]
+```
+
+
+#### Step 3 - Summarize the data 
+
+```{r}
+weekend_act <- tapply(new_act_we$steps, new_act_we$interval, mean)
+weekday_act <- tapply(new_act_wd$steps, new_act_wd$interval, mean)
+
+```
+
+#### Step 4 - Plot the Weekend and Weekday data adjacently. 
+
+```{r}
+par(mfrow = c(1,2))
+
+plot(y = weekend_act, x = names(weekend_act), type = "l", xlab = "5 minutes interval",
+     main = "Daily Activtiy Pattern in Weekend", 
+     ylab = "Average number of steps")
+plot(y = weekday_act, x = names(weekday_act), type = "l", xlab = "5 minutes interval",
+     main = "Daily Activtiy Pattern during Weekdays", 
+     ylab = "Average number of steps")
+```
+
+
